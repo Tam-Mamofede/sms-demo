@@ -13,6 +13,18 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID as string,
 };
 
+if (import.meta.env.PROD) {
+  console.log("ENV sanity:", {
+    apiKeyStartsWith: firebaseConfig.apiKey?.slice(0, 4),
+    apiKeyLen: firebaseConfig.apiKey?.length ?? 0,
+    authDomain: firebaseConfig.authDomain,
+    projectId: firebaseConfig.projectId,
+  });
+}
+if (!firebaseConfig.apiKey || !firebaseConfig.apiKey.startsWith("AIza")) {
+  throw new Error("Firebase apiKey missing/invalid at runtime.");
+}
+
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
