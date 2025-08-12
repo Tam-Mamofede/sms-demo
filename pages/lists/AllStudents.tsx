@@ -104,6 +104,10 @@ export default function AllStudents() {
     setCurrentPage(1); // reset to page 1 when filters change
   }, [selectedClass, selectedName]);
 
+  useEffect(() => {
+    fetchAllStudents();
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#FFF7ED] text-[#065F46]">
       <Navbar />

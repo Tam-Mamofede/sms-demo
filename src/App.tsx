@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 
 // registrations
@@ -74,10 +74,18 @@ const AlertComponent = React.lazy(() => import("../components/Alert"));
 const Loader = React.lazy(() => import("../components/Loader"));
 
 import { useAuth } from "./context/AuthContext";
+import { useStaff } from "./context/StaffContext";
 const App = () => {
   const { user, userRoles } = useAuth();
+  const { fetchAllStaff } = useStaff();
   const userRole = user?.role;
 
+  useEffect(() => {
+    const fetchData = async () => {
+      await fetchAllStaff();
+    };
+    fetchData();
+  }, []);
   return (
     <>
       <AlertComponent />

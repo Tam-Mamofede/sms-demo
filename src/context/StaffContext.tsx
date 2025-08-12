@@ -25,7 +25,8 @@ interface StaffContextType {
   setAttendance: React.Dispatch<React.SetStateAction<StudentAttendanceType>>;
   subjectClassStudents: StudentType[];
   setSubjectClassStudents: React.Dispatch<React.SetStateAction<StudentType[]>>;
-
+  fetchAllStaff: () => Promise<void>;
+  fetchStudentInAssignedClass: () => Promise<void>;
   fetchMonthlyAttendanceForStudent: (
     classId: string,
     studentId: string,
@@ -118,34 +119,33 @@ export const StaffProvider = ({ children }: StaffProviderProps) => {
   }, [user?.subjectAssignments]);
 
   ////////////////////////////////////
+  const fetchStudentInAssignedClass = async () => {
+    if (!user?.formTeacherClass && user?.role !== "FormTeacher") return;
+
+    const assignedClass = user?.formTeacherClass;
+
+    try {
+      const studentsCollectionRef = collection(
+        db,
+        "classes",
+        assignedClass,
+        "students"
+      );
+      const studentDocs = await getDocs(studentsCollectionRef);
+
+      // Convert Firestore QuerySnapshot to an array of student objects
+      const studentList: StudentType[] = studentDocs.docs.map((doc) => ({
+        ...(doc.data() as StudentType),
+        id: doc.id, // Add document ID for reference
+      }));
+
+      setAssignedStudents(studentList);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchStudentInAssignedClass = async () => {
-      if (!user?.formTeacherClass && user?.role !== "FormTeacher") return;
-
-      const assignedClass = user?.formTeacherClass;
-
-      try {
-        const studentsCollectionRef = collection(
-          db,
-          "classes",
-          assignedClass,
-          "students"
-        );
-        const studentDocs = await getDocs(studentsCollectionRef);
-
-        // Convert Firestore QuerySnapshot to an array of student objects
-        const studentList: StudentType[] = studentDocs.docs.map((doc) => ({
-          ...(doc.data() as StudentType),
-          id: doc.id, // Add document ID for reference
-        }));
-
-        setAssignedStudents(studentList);
-      } catch (error) {
-        console.error("Error fetching students:", error);
-      }
-    };
-
     if (user?.role === "FormTeacher") {
       fetchStudentInAssignedClass();
     } else {
@@ -154,48 +154,47 @@ export const StaffProvider = ({ children }: StaffProviderProps) => {
   }, [user?.formTeacherClass]);
 
   ////////////////////////////////////////////
+  const fetchAllStaff = async () => {
+    try {
+      const staffColRef = collection(db, "staff");
+      const staffDocs = await getDocs(staffColRef);
+
+      // Convert Firestore QuerySnapshot to an array of student objects
+      const staffList: StaffType[] = staffDocs.docs.map((doc) => ({
+        ...(doc.data() as StaffType),
+      }));
+
+      setAllStaff(staffList);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchAllStaff = async () => {
-      try {
-        const staffColRef = collection(db, "staff");
-        const staffDocs = await getDocs(staffColRef);
-
-        // Convert Firestore QuerySnapshot to an array of student objects
-        const staffList: StaffType[] = staffDocs.docs.map((doc) => ({
-          ...(doc.data() as StaffType),
-        }));
-
-        setAllStaff(staffList);
-      } catch (error) {
-        console.error("Error fetching students:", error);
-      }
-    };
-
     fetchAllStaff();
   }, [addNewStaff]);
 
   /////////////////////////////////////////////////////////////
+  const fetchAttendance = async () => {
+    const classId = user?.formTeacherClass || "JSS 1";
+    const today = new Date();
+    const formattedDate = today.toISOString().slice(0, 10);
+    const month = today.toISOString().slice(0, 7); // "YYYY-MM"
+
+    const formClassRef = doc(db, "classes", classId);
+    const attendanceRef = doc(
+      formClassRef,
+      `attendance-${month}`,
+      formattedDate
+    );
+    const docSnap = await getDoc(attendanceRef);
+
+    if (docSnap.exists()) {
+      setAttendance(docSnap.data()?.students || {});
+    }
+  };
+
   useEffect(() => {
-    const fetchAttendance = async () => {
-      const classId = user?.formTeacherClass || "JSS 1";
-      const today = new Date();
-      const formattedDate = today.toISOString().slice(0, 10);
-      const month = today.toISOString().slice(0, 7); // "YYYY-MM"
-
-      const formClassRef = doc(db, "classes", classId);
-      const attendanceRef = doc(
-        formClassRef,
-        `attendance-${month}`,
-        formattedDate
-      );
-      const docSnap = await getDoc(attendanceRef);
-
-      if (docSnap.exists()) {
-        setAttendance(docSnap.data()?.students || {});
-      }
-    };
-
     fetchAttendance();
   }, [setAttendance, user?.formTeacherClass]);
 
@@ -209,6 +208,8 @@ export const StaffProvider = ({ children }: StaffProviderProps) => {
         fetchMonthlyAttendanceForStudent,
         subjectClassStudents,
         setSubjectClassStudents,
+        fetchAllStaff,
+        fetchStudentInAssignedClass,
       }}
     >
       {children}
