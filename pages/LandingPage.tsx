@@ -7,9 +7,7 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="py-20 px-6 text-center bg-[#10B981] text-white">
         <Link to="/log-in">
-          <p className="text-md mb-6 hover:underline">
-            Are you a staff or a registered guardian? Log in
-          </p>
+          <p className="text-md mb-6 hover:underline">View Demo</p>
         </Link>
         <h1 className="text-5xl font-bold mb-4">
           Evergreen International School
