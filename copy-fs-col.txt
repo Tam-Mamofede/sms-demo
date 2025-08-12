@@ -1,0 +1,24 @@
+ useEffect(() => {
+    const fetchAndCopyStaff = async () => {
+      try {
+        const staffCol = collection(db, "teachers");
+        const staffDocs = await getDocs(staffCol); // Get all docs
+
+        const staffRef = collection(db, "staff"); // Reference to target collection
+
+        staffDocs.forEach(async (staffDoc) => {
+          // Loop correctly
+          const docData = staffDoc.data();
+          const docId = staffDoc.id; // Keep the original ID
+
+          await setDoc(doc(staffRef, docId), docData); // Copy data with same ID
+        });
+
+        console.log("Successfully copied all teachers to staff!");
+      } catch (error) {
+        console.error("Error copying staff:", error);
+      }
+    };
+
+    fetchAndCopyStaff();
+  }, []);
